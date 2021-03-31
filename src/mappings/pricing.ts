@@ -5,39 +5,27 @@ import { ZERO_BD, factoryContract, ADDRESS_ZERO, ONE_BD } from './helpers'
 import { log } from '@graphprotocol/graph-ts'
 
 const WETH_ADDRESS = '0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7'
-const USDC_WETH_PAIR = '0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc' // created 10008355
-const DAI_WETH_PAIR = '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11' // created block 10042267
-const USDT_WETH_PAIR = '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852' // created block 10093341
+const DAI_WETH_PAIR = '0x17a2e8275792b4616befb02eb9ae699aa0dcb94b' // created block 60355
+const USDT_WETH_PAIR = '0x9ee0a4e21bd333a6bb2ab298194320b8daa26516' // created block 60337
 
 export function getEthPriceInUSD(): BigDecimal {
   // fetch eth prices for each stablecoin
-  let daiPair = Pair.load(DAI_WETH_PAIR) // dai is token0
-  let usdcPair = Pair.load(USDC_WETH_PAIR) // usdc is token0
+  let daiPair = Pair.load(DAI_WETH_PAIR) // dai is token1
   let usdtPair = Pair.load(USDT_WETH_PAIR) // usdt is token1
 
-  // all 3 have been created
-  if (daiPair !== null && usdcPair !== null && usdtPair !== null) {
-    let totalLiquidityETH = daiPair.reserve1.plus(usdcPair.reserve1).plus(usdtPair.reserve0)
+  // both have been created
+  if (daiPair !== null && usdtPair !== null) {
+    let totalLiquidityETH = daiPair.reserve1.plus(usdtPair.reserve1)
     let daiWeight = daiPair.reserve1.div(totalLiquidityETH)
-    let usdcWeight = usdcPair.reserve1.div(totalLiquidityETH)
-    let usdtWeight = usdtPair.reserve0.div(totalLiquidityETH)
-    return daiPair.token0Price
+    let usdtWeight = usdtPair.reserve1.div(totalLiquidityETH)
+    return daiPair.token1Price
       .times(daiWeight)
-      .plus(usdcPair.token0Price.times(usdcWeight))
       .plus(usdtPair.token1Price.times(usdtWeight))
-    // dai and USDC have been created
-  } else if (daiPair !== null && usdcPair !== null) {
-    let totalLiquidityETH = daiPair.reserve1.plus(usdcPair.reserve1)
-    let daiWeight = daiPair.reserve1.div(totalLiquidityETH)
-    let usdcWeight = usdcPair.reserve1.div(totalLiquidityETH)
-    return daiPair.token0Price.times(daiWeight).plus(usdcPair.token0Price.times(usdcWeight))
-    // USDC is the only pair so far
-  } else if (usdcPair !== null) {
-    return usdcPair.token0Price
+    // USDT is the only pair so far
+  } else if (usdtPair !== null) {
+    return usdtPair.token1Price
   } else {
-    //return ONE_BD.times(BigDecimal.fromString("4")) // hack, REMOVE!
-    let ret = ONE_BD.times(BigDecimal.fromString("2")).div(BigDecimal.fromString("2"))
-    return ret // hack, REMOVE!
+    return ZERO_BD
   }
 }
 
