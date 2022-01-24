@@ -1,0 +1,46 @@
+specVersion: 0.0.2
+description: DEX trades candles (5m/15m/1h/4h/1d/1w)
+schema:
+  file: ./dexcandles.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Factory
+    network: avalanche
+    source:
+      address: '0xefa94DE7a4656D787667C749f7E1223D71E9FD88'
+      abi: Factory
+      startBlock: 56877
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/dexcandles.ts
+      entities:
+        - Pair
+      abis:
+        - name: Factory
+          file: ./abis/PNGFactory.json
+      eventHandlers:
+        - event: PairCreated(indexed address,indexed address,address,uint256)
+          handler: handleNewPair
+templates:
+  - kind: ethereum/contract
+    name: Pair
+    network: avalanche
+    source:
+      abi: Pair
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/dexcandles.ts
+      entities:
+        - Pair
+      abis:
+        - name: Pair
+          file: ./abis/Pair.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Swap(indexed address,uint256,uint256,uint256,uint256,indexed address)
+          handler: handleSwap
